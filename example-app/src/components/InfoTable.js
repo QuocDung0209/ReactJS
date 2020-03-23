@@ -7,8 +7,14 @@ import TableContainer from "@material-ui/core/TableContainer";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Paper from "@material-ui/core/Paper";
+import IconButton from "@material-ui/core/IconButton";
+import MapIcon from "@material-ui/icons/Map";
 import { Link } from "react-router-dom";
-import data from "../data.js";
+import CircularProgress from "@material-ui/core/CircularProgress";
+// import data from "../data.js";
+
+import { ALL_PERSONS_LIST } from "../services/queries";
+import { useQuery } from "@apollo/react-hooks";
 
 const StyledTableCell = withStyles(theme => ({
   head: {
@@ -28,62 +34,101 @@ const StyledTableRow = withStyles(theme => ({
   }
 }))(TableRow);
 
-function createData(name, position, age) {
-  return {
-    name,
-    position,
-    age,
-    view: (
-      <Link
-        to={{
-          pathname: "/detail",
-          search: `?name=${name}&age=${age}`
-        }}
-        style={{ color: "green", textDecoration: "none" }}
-      >
-        View
-      </Link>
-    )
-  };
-}
-
 const rows = [];
 
-const useStyles = makeStyles({
+const useStyles = makeStyles(theme => ({
   table: {
     minWidth: 300
+  },
+  container: {
+    maxHeight: 530
+  },
+  loading: {
+    display: "flex",
+    flexDirection: "row"
   }
-});
+}));
 
-export default function CustomizedTables() {
+function InfoTable(props) {
+  // the primary API for executing queries in an Apollo application
+  // useQuery returns an object from Apollo Client that contains loading, error, and data
+  const result = useQuery(ALL_PERSONS_LIST);
   const classes = useStyles();
+  let data = [];
+
+  if (result.data) {
+    data = result.data.persons.allPersons;
+    // console.log(data);
+  }
+
+  function createData(name, job, age, lat, lng) {
+    return {
+      name,
+      job,
+      age,
+      view: (
+        <Link
+          to={{
+            pathname: "/detail",
+            search: `?name=${name}&age=${age}`
+          }}
+          style={{ color: "green", textDecoration: "none" }}
+        >
+          View
+        </Link>
+      ),
+      position: [lat, lng]
+    };
+  }
 
   for (let i = 0; i < data.length; i++) {
-    rows[i] = createData(data[i].name, data[i].position, data[i].age);
+    rows[i] = createData(
+      data[i].name,
+      data[i].job,
+      data[i].age,
+      data[i].lat,
+      data[i].lng
+    );
   }
 
   return (
-    <TableContainer component={Paper}>
+    <TableContainer component={Paper} className={classes.container}>
       <Table className={classes.table} aria-label="customized table">
         <TableHead>
           <TableRow>
             <StyledTableCell>Name</StyledTableCell>
             <StyledTableCell align="right">Age</StyledTableCell>
             <StyledTableCell align="right"></StyledTableCell>
+            <StyledTableCell align="right"></StyledTableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.map(row => (
-            <StyledTableRow key={row.name}>
-              <StyledTableCell component="th" scope="row">
-                {row.name} <br /> {row.position}
+          {result.loading ? (
+            <TableRow>
+              <StyledTableCell align="center" colSpan={4}>
+                <CircularProgress disableShrink />
               </StyledTableCell>
-              <StyledTableCell align="right">{row.age}</StyledTableCell>
-              <StyledTableCell align="right">{row.view}</StyledTableCell>
-            </StyledTableRow>
-          ))}
+            </TableRow>
+          ) : (
+            rows.map(row => (
+              <StyledTableRow key={row.name}>
+                <StyledTableCell component="th" scope="row">
+                  {row.name} <br /> {row.job}
+                </StyledTableCell>
+                <StyledTableCell align="right">{row.age}</StyledTableCell>
+                <StyledTableCell align="right">
+                  <IconButton onClick={() => props.onView(row)}>
+                    <MapIcon />
+                  </IconButton>
+                </StyledTableCell>
+                <StyledTableCell align="right">{row.view}</StyledTableCell>
+              </StyledTableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </TableContainer>
   );
 }
+
+export default InfoTable;

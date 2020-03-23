@@ -12,6 +12,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
+import { useStateValue } from "../store";
 
 const useStyles = makeStyles({
   list: {
@@ -43,15 +44,16 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const FinalForm = () => {
   const [open, setOpen] = useState(false);
+  const store = useStateValue();
 
   const classes = useStyles();
 
-  const handleNo = () => {
+  const handleClose = () => {
     setOpen(false);
   };
 
-  const handleYes = event => {
-    setOpen(false);
+  const handleYes = value => {
+    store[1]({ type: "changeInfo", newInfo: value });
   };
 
   const onSubmit = async values => {
@@ -127,7 +129,7 @@ const FinalForm = () => {
           </form>
           <Dialog
             open={open}
-            onClose={() => false}
+            onClose={handleClose}
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
           >
@@ -138,25 +140,21 @@ const FinalForm = () => {
               </DialogContentText>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleNo} color="primary">
-                <Link
-                  to="/info"
-                  style={{ textDecoration: "none", color: "blue" }}
-                >
-                  No
-                </Link>
+              <Button
+                onClick={handleClose}
+                color="primary"
+                style={{ textDecoration: "none", color: "blue" }}
+              >
+                No
               </Button>
               <Button
-                onClick={handleYes}
+                onClick={() => handleYes(values)}
                 color="primary"
                 autoFocus
                 type="submit"
               >
                 <Link
-                  to={{
-                    pathname: "/",
-                    search: `?name=${values.name}&age=${values.age}`
-                  }}
+                  to={{ pathname: "/" }}
                   style={{ textDecoration: "none", color: "blue" }}
                 >
                   Yes
